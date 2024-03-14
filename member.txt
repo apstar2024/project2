@@ -1,0 +1,40 @@
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import java.util.Optional;
+
+@Service
+public class MemberService {
+
+    @Autowired
+    private MemberRepository memberRepository;
+
+    public Member findById(Long id) {
+        Optional<Member> optionalMember = memberRepository.findById(id);
+        return optionalMember.orElseThrow(() -> new EntityNotFoundException("Member not found with ID: " + id));
+    }
+}
+
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import javax.persistence.EntityNotFoundException;
+
+@RestController
+@RequestMapping("/members")
+public class MemberController {
+
+    @Autowired
+    private MemberService memberService;
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Member> getMemberById(@PathVariable Long id) {
+        try {
+            Member member = memberService.findById(id);
+            return ResponseEntity.ok(member);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+}

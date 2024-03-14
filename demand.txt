@@ -1,0 +1,49 @@
+import com.dfs.dfsAssignment.Repository.DemandRepository;
+import com.dfs.dfsAssignment.Repository.MemberRepository;
+import com.dfs.dfsAssignment.entity.Demand;
+import com.dfs.dfsAssignment.entity.Member;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import javax.persistence.EntityNotFoundException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+@Service
+public class MemberService {
+    @Autowired
+    private MemberRepository memberRepository;
+    @Autowired
+    private DemandRepository demandRepository;
+
+    public Member addNewMember(Member member) {
+        member.setStatus("Available");
+        return memberRepository.save(member);
+    }
+
+    public List<Member> MembersForDemand(Long id) {
+        Optional<Demand> optionalDemand = demandRepository.findById(id);
+        if (optionalDemand.isEmpty()) {
+            throw new EntityNotFoundException("Demand not found with ID: " + id);
+        }
+
+        String skills = optionalDemand.get().getSkills();
+        List<String> requiredSkills = extractSkills(skills);
+
+        return memberRepository.findAllBySkills(requiredSkills);
+    }
+
+    private List<String> extractSkills(String skills) {
+        try {
+            return Arrays.stream(skills.split(","))
+                    .map(String::trim)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Error extracting skills from demand", e);
+        }
+    }
+}
+
+
